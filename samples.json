@@ -1,0 +1,38 @@
+{
+    "Carolina": {
+        "ID": 0,
+        "samples": {
+            "manos arriba": 10,
+            "manos abajo": 5,
+            "manos al frente": 8,
+            "Brazos estirados": 0
+        }
+    },
+    "Camilo": {
+        "ID": 1,
+        "samples": {
+            "manos arriba": 20,
+            "manos abajo": 10,
+            "manos al frente": 16,
+            "Brazos estirados": 0
+        }
+    },
+    "Bartolome": {
+        "ID": 2,
+        "samples": {
+            "manos arriba": 0,
+            "manos abajo": 0,
+            "manos al frente": 0,
+            "Brazos estirados": 0
+        }
+    },
+    "Liliana": {
+        "ID": 3,
+        "samples": {
+            "manos arriba": 0,
+            "manos abajo": 0,
+            "manos al frente": 0,
+            "Brazos estirados": 0
+        }
+    }
+}
