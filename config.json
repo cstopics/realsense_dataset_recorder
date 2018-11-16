@@ -1,11 +1,11 @@
 {
     "capture parameters": {
-        "countdown time": 6,
-        "FPS": 30,
-        "resolution width": 640,
-        "resolution higth": 480,
         "min depth": 10,
         "max depth": 50,
-        "path": "/home/carolina"
+        "FPS": 30,
+        "path": "/home/camilo/Dropbox",
+        "resolution higth": 480,
+        "countdown time": 5,
+        "resolution width": 640
     }
 }

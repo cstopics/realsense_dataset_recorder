@@ -1,11 +1,13 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow, QFileDialog, QWidget, QMessageBox, QTableWidget, QTableWidgetItem
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtCore import QTimer, QRegExp
+from PyQt5.QtGui import QPixmap, QImage, QRegExpValidator
+import numpy as np
 import cv2
 import json
 import os
+import pyrealsense2 as rs
 
 SIZE = None
 FPS = None
@@ -25,8 +27,9 @@ current_movement = ''
 class mainwindow(QMainWindow):
 	def __init__(self):
 		super(mainwindow,self).__init__(None)
-		loadUi('mainwindow.ui',self)
+		loadUi('mainwindow.ui',self)		
 		self.validate_path()
+		self.getParameters()
 		self.get_dataset_info()
 		self.fps = 24
 		self.image = None
@@ -43,6 +46,11 @@ class mainwindow(QMainWindow):
 		self.btn_addMovement.clicked.connect(self.addNewMovement)
 		self.tb_movements.cellClicked.connect(self.set_currentMovement)
 
+		rx = QRegExp("[a-zA-Z0-9_]*")
+		validator = QRegExpValidator(rx)
+		self.in_newPerson.setValidator(validator)
+		self.in_newMovement.setValidator(validator)
+
 	def set_currentMovement(self, row, column):
 		global current_movement		
 		item = self.tb_movements.item(row, column)
@@ -58,7 +66,7 @@ class mainwindow(QMainWindow):
 		except:
 			pass
 		with open(SAMPLES_FILE, 'w') as f:
-		    json.dump(people_dataset, f, indent=4) 
+			json.dump(people_dataset, f, indent=4) 
 		self.updateCurrentPerson()
 
 	def addNewPerson(self):
@@ -76,7 +84,7 @@ class mainwindow(QMainWindow):
 		except:
 			pass
 		with open(SAMPLES_FILE, 'w') as f:
-		    json.dump(people_dataset, f, indent=4) 
+			json.dump(people_dataset, f, indent=4) 
 		self.get_dataset_info()
 
 
@@ -98,6 +106,17 @@ class mainwindow(QMainWindow):
 				self.tb_movements.setItem(n,0,newitem)
 
 
+	def getParameters(self):
+		global COUNTDOWN_TIME, FPS, MIN_DEPTH, MAX_DEPTH, SIZE, CONFIG_FILE
+		with open(CONFIG_FILE, 'r') as f:
+			data = json.load(f)
+		COUNTDOWN_TIME = data["capture parameters"]["countdown time"]
+		FPS = data["capture parameters"]["FPS"]
+		SIZE = (data["capture parameters"]["resolution width"], data["capture parameters"]["resolution higth"])
+		MIN_DEPTH = data["capture parameters"]["min depth"]
+		MAX_DEPTH = data["capture parameters"]["max depth"]
+		f.close()
+
 	def updateParameters(self):
 		global COUNTDOWN_TIME, FPS, MIN_DEPTH, MAX_DEPTH, SIZE, CONFIG_FILE
 		COUNTDOWN_TIME = self.in_countdownTime.value()		
@@ -116,31 +135,67 @@ class mainwindow(QMainWindow):
 			data["capture parameters"]["max depth"] = MAX_DEPTH
 		os.remove(CONFIG_FILE)
 		with open(CONFIG_FILE, 'w') as f:
-		    json.dump(data, f, indent=4)
+			json.dump(data, f, indent=4)
 		print(SIZE)
 
 	def start_camera(self):
-		self.capture = cv2.VideoCapture(0)
-		#self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-		#self.capture.set(cv2.CAP_PROP_FRAME_ẂIDTH, 640)
+		#Verify realsense is connected
+		ctx = rs.context()
+		if len(ctx.devices) == 0:
+			choice = QMessageBox.warning(self, "Camera not found", "Please connect RealSense camera")
+		name = '001'		
+		# Configure depth and color streams
+		self.pipeline = rs.pipeline()
+		config = rs.config()
+		config.enable_stream(rs.stream.depth, SIZE[0], SIZE[1], rs.format.z16, FPS)
+		config.enable_stream(rs.stream.color, SIZE[0], SIZE[1], rs.format.bgr8, FPS)
+		fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
+		self.outRGB = cv2.VideoWriter(name + '_rgb.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), True) 
+		self.outDepth = cv2.VideoWriter(name + '_dpt.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), False)
+		# Start streaming
+		self.pipeline.start(config)
 		self.timer = QTimer(self)
 		self.timer.timeout.connect(self.update_frame)
-		self.timer.start(1000./self.fps)
+		self.timer.start(1000./FPS)
+
 
 	def update_frame(self):
-		ret, self.image = self.capture.read()
-		self.image = cv2.flip(self.image, 1)
-		self.displayImage(self.image, 1)
+		frames = self.pipeline.wait_for_frames()
+		depth_frame = frames.get_depth_frame()
+		color_frame = frames.get_color_frame()
+		if not depth_frame or not color_frame:
+			return
+
+		depth_image_temp = np.asanyarray(depth_frame.get_data())
+		self.depth_image = cv2.convertScaleAbs(depth_image_temp, alpha=0.03)
+		self.color_image = np.asanyarray(color_frame.get_data())
+
+		self.depth_image[self.depth_image<MIN_DEPTH] = MAX_DEPTH
+		self.depth_image[self.depth_image>MAX_DEPTH] = MAX_DEPTH
+		self.depth_image -= MIN_DEPTH
+		self.depth_image *= int((255/(MAX_DEPTH-MIN_DEPTH)))
+		
+
+		self.outRGB.write(self.color_image)
+		self.outDepth.write(self.depth_image)
+		
+		self.displayImage(self.color_image, 1)
 
 	def displayImage(self, img, window=1):
-		frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+		frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)		
 		img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
 		pix = QPixmap.fromImage(img)
 		self.lbl_video_frame.setPixmap(pix)
 
 	def stop_camera(self):
 		self.timer.stop()
-		self.capture.release()
+		self.pipeline.stop()
+		self.outRGB.release()
+		self.outDepth.release()		
+		frame = 255*np.zeros(self.color_image.shape)
+		img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+		pix = QPixmap.fromImage(img)
+		self.lbl_video_frame.setPixmap(pix)		
 
 	def validate_path(self):
 		global PATH
@@ -159,7 +214,7 @@ class mainwindow(QMainWindow):
 		self.lbl_path.setText(PATH)
 		os.remove(CONFIG_FILE)
 		with open(CONFIG_FILE, 'w') as f:
-		    json.dump(data, f, indent=4)
+			json.dump(data, f, indent=4)
 
 	def ask2path(self, msg_err):
 		msg_err = msg_err + "Please select a directory."
