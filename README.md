@@ -15,3 +15,12 @@ Tested in Ubuntu 18.04 LTS (Bionic)
 Be sure your RealSense™ has the lastest firmware version (tested with 05.10.06.00), it did not work with lower versions.
 
 At the moment of writing this tutorial, *pyrealsense2* package did not worked with the lastest version of conda (Python 3.7).
+
+## Running
+
+If you are not using miniconda, you should use *python3* instead of *python*.
+
+``` bash
+cd /directory/to/clonned/repository
+python main.py
+```
