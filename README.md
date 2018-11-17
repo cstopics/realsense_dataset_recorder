@@ -24,3 +24,7 @@ If you are not using miniconda, you should use *python3* instead of *python*.
 cd /directory/to/clonned/repository
 python main.py
 ```
+
+## Using
+
+Bla bla bla...
