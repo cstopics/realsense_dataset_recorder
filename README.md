@@ -9,7 +9,7 @@ Software to record RGB-D datasets via Realsense D435
 Tested in Ubuntu 18.04 LTS (Bionic)
 
 * Intel® RealSense™ SDK (https://github.com/IntelRealSense/librealsense)
-* Python 3 (tested with 3.6.5).
+* Python 3 (tested with 3.6.5, it is recomended to use miniconda).
 * Python packages: numpy, PyQt5, pyrealsense2
 
 Be sure your RealSense™ has the lastest firmware version (tested with 05.10.06.00)
