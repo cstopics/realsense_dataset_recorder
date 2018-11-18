@@ -6,69 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>829</width>
-    <height>757</height>
+    <width>1323</width>
+    <height>713</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>1323</width>
+    <height>713</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1323</width>
+    <height>713</height>
+   </size>
+  </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Dataset Recorder</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="btn_startcamera">
-    <property name="geometry">
-     <rect>
-      <x>450</x>
-      <y>20</y>
-      <width>131</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Start WebCam</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_stopcamera">
-    <property name="geometry">
-     <rect>
-      <x>600</x>
-      <y>20</y>
-      <width>131</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Stop WebCam</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lbl_video_frame">
-    <property name="geometry">
-     <rect>
-      <x>450</x>
-      <y>60</y>
-      <width>341</width>
-      <height>301</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::Box</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Plain</enum>
-    </property>
-    <property name="lineWidth">
-     <number>1</number>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>20</x>
       <y>10</y>
       <width>241</width>
       <height>181</height>
@@ -276,10 +237,10 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>200</y>
-      <width>251</width>
-      <height>511</height>
+      <x>270</x>
+      <y>10</y>
+      <width>741</width>
+      <height>251</height>
      </rect>
     </property>
     <property name="title">
@@ -289,7 +250,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
+       <y>36</y>
        <width>67</width>
        <height>17</height>
       </rect>
@@ -303,7 +264,7 @@
       <rect>
        <x>50</x>
        <y>30</y>
-       <width>181</width>
+       <width>201</width>
        <height>31</height>
       </rect>
      </property>
@@ -317,8 +278,8 @@
     <widget class="QComboBox" name="cb_person">
      <property name="geometry">
       <rect>
-       <x>70</x>
-       <y>70</y>
+       <x>83</x>
+       <y>150</y>
        <width>171</width>
        <height>25</height>
       </rect>
@@ -327,8 +288,8 @@
     <widget class="QLabel" name="label_8">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>70</y>
+       <x>13</x>
+       <y>150</y>
        <width>67</width>
        <height>17</height>
       </rect>
@@ -341,7 +302,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>100</y>
+       <y>190</y>
        <width>67</width>
        <height>17</height>
       </rect>
@@ -353,8 +314,8 @@
     <widget class="QLabel" name="lbl_IDperson">
      <property name="geometry">
       <rect>
-       <x>87</x>
-       <y>100</y>
+       <x>91</x>
+       <y>190</y>
        <width>67</width>
        <height>17</height>
       </rect>
@@ -366,9 +327,9 @@
     <widget class="QTableWidget" name="tb_movements">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>130</y>
-       <width>231</width>
+       <x>280</x>
+       <y>30</y>
+       <width>271</width>
        <height>211</height>
       </rect>
      </property>
@@ -397,8 +358,8 @@
     <widget class="QPushButton" name="btn_addPerson">
      <property name="geometry">
       <rect>
-       <x>130</x>
-       <y>360</y>
+       <x>590</x>
+       <y>80</y>
        <width>111</width>
        <height>41</height>
       </rect>
@@ -411,8 +372,8 @@ person</string>
     <widget class="QPushButton" name="btn_addMovement">
      <property name="geometry">
       <rect>
-       <x>130</x>
-       <y>410</y>
+       <x>590</x>
+       <y>180</y>
        <width>111</width>
        <height>41</height>
       </rect>
@@ -425,8 +386,8 @@ movement</string>
     <widget class="QLineEdit" name="in_newPerson">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>360</y>
+       <x>590</x>
+       <y>30</y>
        <width>113</width>
        <height>41</height>
       </rect>
@@ -435,11 +396,277 @@ movement</string>
     <widget class="QLineEdit" name="in_newMovement">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>410</y>
+       <x>590</x>
+       <y>130</y>
        <width>113</width>
        <height>41</height>
       </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_changePath">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>131</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Change Path</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_10">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>220</y>
+       <width>141</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Current movement:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbl_currMove">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>220</y>
+       <width>111</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="gbox_realsenseOutput">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>260</y>
+      <width>991</width>
+      <height>401</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Realsense output</string>
+    </property>
+    <widget class="QLabel" name="lbl_video_rgb">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>480</width>
+       <height>360</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbl_video_depth">
+     <property name="geometry">
+      <rect>
+       <x>500</x>
+       <y>30</y>
+       <width>480</width>
+       <height>360</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_4">
+    <property name="geometry">
+     <rect>
+      <x>1020</x>
+      <y>10</y>
+      <width>301</width>
+      <height>251</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Record control</string>
+    </property>
+    <widget class="QPushButton" name="btn_startRecording">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>131</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Start Recording</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_stopRecording">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>30</y>
+       <width>131</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Stop Recording</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbl_countdownTime">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>90</y>
+       <width>141</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Utopia</family>
+       <pointsize>120</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbl_recording">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>80</y>
+       <width>141</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Utopia</family>
+       <pointsize>64</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="inputMethodHints">
+      <set>Qt::ImhNone</set>
+     </property>
+     <property name="text">
+      <string>⬤</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbl_noRecording">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>80</y>
+       <width>141</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Utopia</family>
+       <pointsize>80</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>■</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_deleteRecord">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>220</y>
+       <width>131</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Delete last record</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lbl_playing">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>80</y>
+       <width>141</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Utopia</family>
+       <pointsize>80</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>▶</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_playRecord">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>220</y>
+       <width>131</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Play last record</string>
      </property>
     </widget>
    </widget>
@@ -449,7 +676,7 @@ movement</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>829</width>
+     <width>1323</width>
      <height>22</height>
     </rect>
    </property>

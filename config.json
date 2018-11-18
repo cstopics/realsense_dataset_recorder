@@ -3,9 +3,9 @@
         "min depth": 10,
         "max depth": 50,
         "FPS": 30,
-        "path": "/home/camilo/Dropbox",
+        "path": "/home/carolina/Documents/dataset_imitation",
         "resolution higth": 480,
-        "countdown time": 5,
+        "countdown time": 3,
         "resolution width": 640
     }
 }
