@@ -5,7 +5,7 @@
         "FPS": 30,
         "path": "/home/carolina/Documents/dataset_imitation",
         "resolution higth": 480,
-        "countdown time": 3,
+        "countdown time": 1,
         "resolution width": 640
     }
 }

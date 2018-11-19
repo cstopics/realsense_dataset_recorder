@@ -76,6 +76,24 @@ class mainwindow(QMainWindow):
 
 	
 	def reproduceRecord(self):
+		global PLAYING
+		PLAYING = True
+		self.lbl_noRecording.hide()
+		self.lbl_playing.show()
+		self.gbox_realsenseOutput.setTitle("PLAYING")
+		sample_num = str(self.getSampleNumber()-1)
+		path_move = PATH+'/'+current_movement
+		name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
+		self.capRGB = cv2.VideoCapture(name + '_RGB.mp4')
+		self.capD = cv2.VideoCapture(name + '_D.mp4')
+		if (self.capRGB.isOpened()== False): 
+			choice = QMessageBox.warning(self, "Playing Error", "Error opening video RGB.mp4")
+			return
+		if (self.capD.isOpened()== False): 
+			choice = QMessageBox.warning(self, "Playing Error", "Error opening video D.mp4")
+			return
+
+
 		
 
 	def enableUserInputs(self, boolSet):		
@@ -108,10 +126,10 @@ class mainwindow(QMainWindow):
 	def startCountdown(self):
 		global cTime
 		if current_person_ID==-1:
-			choice = QMessageBox.warning(self, "Record Errror", "Please select person")
+			choice = QMessageBox.warning(self, "Record Error", "Please select person")
 			return
 		if current_movement=='':
-			choice = QMessageBox.warning(self, "Record Errror", "Please select movement")
+			choice = QMessageBox.warning(self, "Record Error", "Please select movement")
 			return
 		cTime = COUNTDOWN_TIME
 		self.lbl_noRecording.hide()
@@ -325,6 +343,7 @@ class mainwindow(QMainWindow):
 
 
 	def update_frame(self):
+		global PLAYING
 		if not PLAYING:
 			frames = self.pipeline.wait_for_frames()
 			depth_frame = frames.get_depth_frame()
@@ -340,12 +359,27 @@ class mainwindow(QMainWindow):
 			self.depth_image[self.depth_image>MAX_DEPTH] = MAX_DEPTH
 			self.depth_image -= MIN_DEPTH
 			self.depth_image *= int((255/(MAX_DEPTH-MIN_DEPTH)))
-			
+
+						
 			if SAVE_MP4:
 				self.outRGB.write(self.color_image)
 				self.outDepth.write(self.depth_image)
 			
 			self.displayImage(self.color_image, self.depth_image, 1)
+
+		else:			
+			ret, frameRGB = self.capRGB.read()
+			ret, frameD = self.capD.read()			
+			if ret == True:
+				self.displayImage(frameRGB, frameD[:,:,0], 1)
+			else:				
+				self.capRGB.release()
+				self.capD.release()
+				PLAYING = False
+				self.lbl_noRecording.show()
+				self.lbl_playing.hide()
+				self.gbox_realsenseOutput.setTitle("Realsense output")
+
 
 	def displayImage(self, img_rgb, img_d, window=1):
 		img = cv2.resize(img_rgb,(int(480),int(360)))
