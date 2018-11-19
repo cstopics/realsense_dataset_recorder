@@ -35,7 +35,7 @@ try:
             continue
 
         depth_image_temp = np.asanyarray(depth_frame.get_data())
-        depth_image = cv2.convertScaleAbs(depth_image_temp, alpha=0.03)
+        depth_image = cv2.convertScaleAbs(depth_image_temp)
         color_image = np.asanyarray(color_frame.get_data())
 
         depth_image[depth_image<MIN_DEPTH] = MAX_DEPTH

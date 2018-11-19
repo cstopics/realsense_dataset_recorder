@@ -17,6 +17,7 @@ COUNTDOWN_TIME = None
 CONFIG_FILE = 'config.json'
 SAMPLES_FILE = '/samples.json'
 PATH = ""
+SHOW_MASKED = False
 
 people_dataset = []
 current_person_ID = -1
@@ -54,6 +55,7 @@ class mainwindow(QMainWindow):
 		self.btn_stopRecording.clicked.connect(self.stopRecord)
 		self.btn_deleteRecord.clicked.connect(self.deleteRecord)
 		self.btn_playRecord.clicked.connect(self.reproduceRecord)
+		self.cb_showMask.stateChanged.connect(self.setMask)
 		self.lbl_countdownTime.hide()
 		self.lbl_recording.hide()
 		self.lbl_playing.hide()
@@ -74,10 +76,18 @@ class mainwindow(QMainWindow):
 	def __del__(self):		
 		self.stop_camera()
 
-	
+	def setMask(self):
+		global SHOW_MASKED
+		if self.cb_showMask.isChecked():
+			SHOW_MASKED = True
+		else:
+			SHOW_MASKED = False
+
 	def reproduceRecord(self):
-		global PLAYING
+		global PLAYING, SHOW_MASKED
 		PLAYING = True
+		SHOW_MASKED = False
+		self.cb_showMask.setEnabled(False)
 		self.lbl_noRecording.hide()
 		self.lbl_playing.show()
 		self.gbox_realsenseOutput.setTitle("PLAYING")
@@ -330,13 +340,17 @@ class mainwindow(QMainWindow):
 		# Configure depth and color streams
 		self.pipeline = rs.pipeline()
 		config = rs.config()
-		config.enable_stream(rs.stream.depth, SIZE[0], SIZE[1], rs.format.z16, FPS)
+		config.enable_stream(rs.stream.depth, SIZE[0], int(0.75*SIZE[1]), rs.format.z16, FPS)
 		config.enable_stream(rs.stream.color, SIZE[0], SIZE[1], rs.format.bgr8, FPS)
-		#fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
-		#self.outRGB = cv2.VideoWriter(name + '_rgb.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), True) 
-		#self.outDepth = cv2.VideoWriter(name + '_dpt.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), False)
 		# Start streaming
-		self.pipeline.start(config)
+		profile = self.pipeline.start(config)
+		self.align = rs.align(rs.stream.color)
+		depth_sensor = profile.get_device().first_depth_sensor()
+		depth_scale = depth_sensor.get_depth_scale()
+		self.min_depth_data = int(MIN_DEPTH*0.01 / depth_scale)
+		self.max_depth_data = int(MAX_DEPTH*0.01 / depth_scale)
+		clipping_distance_in_meters = 1 #1 meter
+		clipping_distance = clipping_distance_in_meters / depth_scale
 		self.timer = QTimer(self)
 		self.timer.timeout.connect(self.update_frame)
 		self.timer.start(1000./FPS)
@@ -346,26 +360,55 @@ class mainwindow(QMainWindow):
 		global PLAYING
 		if not PLAYING:
 			frames = self.pipeline.wait_for_frames()
-			depth_frame = frames.get_depth_frame()
-			color_frame = frames.get_color_frame()
-			if not depth_frame or not color_frame:
+			aligned_frames = self.align.process(frames)
+
+			aligned_depth_frame = aligned_frames.get_depth_frame()
+			color_frame = aligned_frames.get_color_frame()
+
+			if not aligned_depth_frame or not color_frame:
 				return
 
-			depth_image_temp = np.asanyarray(depth_frame.get_data())
-			self.depth_image = cv2.convertScaleAbs(depth_image_temp, alpha=0.03)
+			depth_image_temp = np.asanyarray(aligned_depth_frame.get_data())
+			self.depth_image = np.asanyarray(aligned_depth_frame.get_data())
 			self.color_image = np.asanyarray(color_frame.get_data())
 
-			self.depth_image[self.depth_image<MIN_DEPTH] = MAX_DEPTH
-			self.depth_image[self.depth_image>MAX_DEPTH] = MAX_DEPTH
-			self.depth_image -= MIN_DEPTH
-			self.depth_image *= int((255/(MAX_DEPTH-MIN_DEPTH)))
+			depth_image_3d = np.dstack((depth_image_temp, depth_image_temp, depth_image_temp))	
+			depth_image_temp[depth_image_temp<self.min_depth_data] = self.max_depth_data
+			depth_image_temp[self.depth_image>self.max_depth_data] = self.max_depth_data
+			depth_image_temp -= self.min_depth_data
+			depth_image_temp = 255.0 * (depth_image_temp.astype(np.float) / (self.max_depth_data-self.min_depth_data))
+			self.depth_image = depth_image_temp.astype(np.uint8)
+
+			grey_color = 153
+			self.masked = np.where((depth_image_3d > self.max_depth_data) | (depth_image_3d < self.min_depth_data), grey_color, self.color_image)
+
+			# depth_frame = frames.get_depth_frame()
+			# color_frame = frames.get_color_frame()
+			# if not depth_frame or not color_frame:
+			# 	return
+
+			# depth_image_temp = np.asanyarray(depth_frame.get_data())
+			# self.depth_image = cv2.convertScaleAbs(depth_image_temp, alpha=0.03)
+			# self.color_image = np.asanyarray(color_frame.get_data())
+
+			# self.depth_image[self.depth_image<MIN_DEPTH] = MAX_DEPTH
+			# self.depth_image[self.depth_image>MAX_DEPTH] = MAX_DEPTH
+			# self.depth_image -= MIN_DEPTH
+			# self.depth_image *= int((255/(MAX_DEPTH-MIN_DEPTH)))
 
 						
 			if SAVE_MP4:
 				self.outRGB.write(self.color_image)
 				self.outDepth.write(self.depth_image)
-			
-			self.displayImage(self.color_image, self.depth_image, 1)
+
+			color_image_show = cv2.flip( self.color_image, 1 )
+			masked_show = cv2.flip( self.masked, 1 )
+			depth_image_show = cv2.flip( self.depth_image, 1 )
+
+			if SHOW_MASKED:			
+				self.displayImage(masked_show, depth_image_show, 1)
+			else:
+				self.displayImage(color_image_show, depth_image_show, 1)
 
 		else:			
 			ret, frameRGB = self.capRGB.read()
@@ -379,6 +422,7 @@ class mainwindow(QMainWindow):
 				self.lbl_noRecording.show()
 				self.lbl_playing.hide()
 				self.gbox_realsenseOutput.setTitle("Realsense output")
+				self.cb_showMask.setEnabled(True)
 
 
 	def displayImage(self, img_rgb, img_d, window=1):

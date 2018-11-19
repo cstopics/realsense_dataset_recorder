@@ -32,7 +32,7 @@
       <x>20</x>
       <y>10</y>
       <width>241</width>
-      <height>181</height>
+      <height>231</height>
      </rect>
     </property>
     <property name="title">
@@ -231,6 +231,45 @@
      </property>
      <property name="value">
       <number>50</number>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="cb_showMask">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>190</y>
+       <width>111</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Show mask</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>120</y>
+       <width>31</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>cm</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_12">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>150</y>
+       <width>31</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>cm</string>
      </property>
     </widget>
    </widget>
@@ -509,7 +548,7 @@ movement</string>
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
-      <x>1020</x>
+      <x>1010</x>
       <y>10</y>
       <width>301</width>
       <height>251</height>
