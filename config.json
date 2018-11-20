@@ -3,9 +3,9 @@
         "min depth": 10,
         "max depth": 50,
         "FPS": 30,
-        "path": "/home/carolina/Documents/dataset_imitation",
+        "path": "/home/carolina/Documents/dataset_test",
         "resolution higth": 480,
-        "countdown time": 1,
+        "countdown time": 3,
         "resolution width": 640
     }
 }

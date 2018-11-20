@@ -19,7 +19,7 @@ SAMPLES_FILE = '/samples.json'
 PATH = ""
 SHOW_MASKED = False
 
-people_dataset = []
+people_dataset = {}
 current_person_ID = -1
 current_movement = ''
 cTime = COUNTDOWN_TIME
@@ -234,10 +234,11 @@ class mainwindow(QMainWindow):
 			json.dump(data, f, indent=4)
 
 	def set_currentMovement(self, row, column):
-		global current_movement		
-		item = self.tb_movements.item(row, column)
-		current_movement = item.text()
-		self.lbl_currMove.setText(current_movement)
+		global current_movement
+		if self.cb_person.currentText() != "Select":		
+			item = self.tb_movements.item(row, column)
+			current_movement = item.text()
+			self.lbl_currMove.setText(current_movement)
 		
 	def addNewMovement(self):
 		global people_dataset
@@ -259,6 +260,7 @@ class mainwindow(QMainWindow):
 		people_dataset[newPersonName] = {}
 		people_dataset[newPersonName]["ID"] = len(people_dataset)-1
 		people_dataset[newPersonName]["samples"] = {}
+		print("add person 1")
 		if len(people_dataset)>1:
 			name = list(people_dataset.keys())[0]
 			for key in people_dataset[name]["samples"].keys():
@@ -271,24 +273,30 @@ class mainwindow(QMainWindow):
 			json.dump(people_dataset, f, indent=4) 
 		self.get_dataset_info()
 		self.in_newPerson.setText('')
+		print("Person added")
 
 
 	def updateCurrentPerson(self):
 		global current_person_ID
-		cPersonName = self.cb_person.currentText ()
-		self.lbl_IDperson.setText('')
-		if cPersonName != "Select":
-			current_person_ID = people_dataset[cPersonName]["ID"]
-			self.lbl_IDperson.setText(str(current_person_ID))
-			self.tb_movements.clearContents()
-			data = people_dataset[cPersonName]["samples"]
-			self.tb_movements.setRowCount(len(data))
-			self.tb_movements.setHorizontalHeaderLabels(['Movement','Samples'])     
-			for n, key in enumerate(sorted(data.keys())):
-				newitem = QTableWidgetItem(str(data[key]))
-				self.tb_movements.setItem(n,1,newitem)
-				newitem = QTableWidgetItem(key)
-				self.tb_movements.setItem(n,0,newitem)
+		if self.in_newPerson.text() == '':
+			cPersonName = self.cb_person.currentText()
+			self.lbl_IDperson.setText('')
+			print(cPersonName)
+			if cPersonName != "Select":
+				current_person_ID = people_dataset[cPersonName]["ID"]
+				print(people_dataset)
+				self.lbl_IDperson.setText(str(current_person_ID))
+				self.tb_movements.clearContents()
+				data = people_dataset[cPersonName]["samples"]
+				self.tb_movements.setRowCount(len(data))
+				self.tb_movements.setHorizontalHeaderLabels(['Movement','Samples'])     
+				for n, key in enumerate(sorted(data.keys())):
+					newitem = QTableWidgetItem(str(data[key]))
+					self.tb_movements.setItem(n,1,newitem)
+					newitem = QTableWidgetItem(key)
+					self.tb_movements.setItem(n,0,newitem)
+			if cPersonName == "Select":
+				self.tb_movements.clearContents()
 
 
 	def getParameters(self):
@@ -488,9 +496,14 @@ class mainwindow(QMainWindow):
 			return 0
 		people_dataset = json.load(f)
 		f.close()
+		print("get_dataset_info")		
 		self.cb_person.clear()
 		if len(people_dataset) != 0:
 			self.cb_person.addItems(["Select"]+list(people_dataset.keys()))
+		# for name in people_dataset.keys():
+		# 	if people_dataset[name]["ID"] == current_person_ID:
+		# 		self.cb_person.setItemText(name)
+		# 		break
 
 
 # 		# dialog = dialogPath(parent=self, msg_err=msg_err)
