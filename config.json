@@ -1,11 +1,11 @@
 {
     "capture parameters": {
-        "min depth": 100,
-        "max depth": 200,
-        "FPS": 30,
-        "path": "/home/carolina/Documents/dataset",
-        "resolution higth": 480,
-        "countdown time": 3,
-        "resolution width": 640
+        "resolution higth": 480, 
+        "resolution width": 640, 
+        "countdown time": 3, 
+        "FPS": 30, 
+        "max depth": 300, 
+        "path": "/home/carolina/Documents/dataset", 
+        "min depth": 130
     }
 }
