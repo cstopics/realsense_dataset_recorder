@@ -139,6 +139,9 @@
      </property>
     </widget>
     <widget class="QSpinBox" name="in_FPS">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>130</x>
@@ -158,6 +161,9 @@
      </property>
     </widget>
     <widget class="QSpinBox" name="in_resolutionWidth">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>130</x>
@@ -177,6 +183,9 @@
      </property>
     </widget>
     <widget class="QSpinBox" name="in_resolutionHight">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>190</x>
@@ -227,7 +236,7 @@
       <number>1</number>
      </property>
      <property name="maximum">
-      <number>100</number>
+      <number>999</number>
      </property>
      <property name="value">
       <number>50</number>

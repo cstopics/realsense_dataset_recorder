@@ -1,9 +1,9 @@
 {
     "capture parameters": {
-        "min depth": 10,
-        "max depth": 50,
+        "min depth": 100,
+        "max depth": 200,
         "FPS": 30,
-        "path": "/home/carolina/Documents/dataset_test",
+        "path": "/home/carolina/Documents/dataset",
         "resolution higth": 480,
         "countdown time": 3,
         "resolution width": 640
