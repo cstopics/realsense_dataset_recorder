@@ -27,4 +27,4 @@ python main.py
 
 ## Using
 
-Bla bla bla...
+(Add using instructions)
