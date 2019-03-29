@@ -7,5 +7,11 @@
         "max depth": 300,
         "path": "/home/camilo/Documents/dataset",
         "min depth": 50
+    },
+    "trigger": {
+        "enable": true,
+        "x": 500,
+        "y": 94,
+        "radius": 20
     }
 }

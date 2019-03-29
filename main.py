@@ -19,6 +19,11 @@ SAMPLES_FILE = '/samples.json'
 PATH = ""
 SHOW_MASKED = False
 
+TRIGGER_ENABLE = False
+TRIGGER_X = 100
+TRIGGER_Y = 100
+TRIGGER_RADIUS = 20
+
 people_dataset = {}
 current_person_ID = -1
 current_movement = ''
@@ -29,517 +34,614 @@ PLAYING = False
 
 
 class mainwindow(QMainWindow):
-	def __init__(self):
-		super(mainwindow,self).__init__(None)
-		loadUi('mainwindow.ui',self)
-		self.verifyCamera()		
-		self.validate_path()
-		self.getParameters()
-		self.get_dataset_info()
-		self.showMaximized()
-		self.start_camera()
-		self.fps = 24
-		self.image = None		
-		self.in_countdownTime.valueChanged.connect(self.updateParameters)
-		self.in_FPS.valueChanged.connect(self.updateParameters) 
-		self.in_resolutionWidth.valueChanged.connect(self.updateParameters)
-		self.in_resolutionHight.valueChanged.connect(self.updateParameters)
-		self.in_minDepth.valueChanged.connect(self.updateParameters)
-		self.in_maxDepth.valueChanged.connect(self.updateParameters)
-		self.cb_person.currentIndexChanged.connect(self.updateCurrentPerson)
-		self.btn_addPerson.clicked.connect(self.addNewPerson)
-		self.btn_addMovement.clicked.connect(self.addNewMovement)
-		self.tb_movements.cellClicked.connect(self.set_currentMovement)
-		self.btn_changePath.clicked.connect(self.changeDirectory)
-		self.btn_startRecording.clicked.connect(self.startCountdown)
-		self.btn_stopRecording.clicked.connect(self.stopRecord)
-		self.btn_deleteRecord.clicked.connect(self.deleteRecord)
-		self.btn_playRecord.clicked.connect(self.reproduceRecord)
-		self.cb_showMask.stateChanged.connect(self.setMask)
-		self.lbl_countdownTime.hide()
-		self.lbl_recording.hide()
-		self.lbl_playing.hide()
-		self.lbl_noRecording.setStyleSheet('color: green')
-		self.lbl_recording.setStyleSheet('color: red')
-		self.lbl_playing.setStyleSheet('color: blue')
-		self.btn_stopRecording.setEnabled(False)
-		self.btn_deleteRecord.setEnabled(False)
-		self.btn_playRecord.setEnabled(False)
-		self.outRGB = []
-		self.outDepth = []
+    def __init__(self):
+        super(mainwindow,self).__init__(None)
+        loadUi('mainwindow.ui',self)
+        self.verifyCamera()     
+        self.validate_path()
+        self.getParameters()
+        self.get_dataset_info()
+        self.showMaximized()
+        self.start_camera()
+        self.fps = 24
+        self.image = None       
+        self.in_countdownTime.valueChanged.connect(self.updateParameters)
+        self.in_FPS.valueChanged.connect(self.updateParameters) 
+        self.in_resolutionWidth.valueChanged.connect(self.updateParameters)
+        self.in_resolutionHight.valueChanged.connect(self.updateParameters)
+        self.in_minDepth.valueChanged.connect(self.updateParameters)
+        self.in_maxDepth.valueChanged.connect(self.updateParameters)
 
-		rx = QRegExp("[a-zA-Z0-9_]*")
-		validator = QRegExpValidator(rx)
-		self.in_newPerson.setValidator(validator)
-		self.in_newMovement.setValidator(validator)
+        self.tr_ena.stateChanged.connect(self.updateParameters)
+        self.tr_x.valueChanged.connect(self.updateParameters)
+        self.tr_y.valueChanged.connect(self.updateParameters)
+        self.tr_r.valueChanged.connect(self.updateParameters)
+        self.trigger_curr_color = "NONE"
+        self.trigger_prev_color = "NONE"
 
-	def __del__(self):		
-		self.stop_camera()
+        self.countdown_ena = False
 
-	def setMask(self):
-		global SHOW_MASKED
-		if self.cb_showMask.isChecked():
-			SHOW_MASKED = True
-		else:
-			SHOW_MASKED = False
+        self.cb_person.currentIndexChanged.connect(self.updateCurrentPerson)
+        self.btn_addPerson.clicked.connect(self.addNewPerson)
+        self.btn_addMovement.clicked.connect(self.addNewMovement)
+        self.tb_movements.cellClicked.connect(self.set_currentMovement)
+        self.btn_changePath.clicked.connect(self.changeDirectory)
+        self.btn_startRecording.clicked.connect(self.startCountdown)
+        self.btn_stopRecording.clicked.connect(self.stopRecord)
+        self.btn_deleteRecord.clicked.connect(self.deleteRecord)
+        self.btn_playRecord.clicked.connect(self.reproduceRecord)
+        self.cb_showMask.stateChanged.connect(self.setMask)
+        self.lbl_countdownTime.hide()
+        self.lbl_recording.hide()
+        self.lbl_playing.hide()
+        self.lbl_noRecording.setStyleSheet('color: green')
+        self.lbl_recording.setStyleSheet('color: red')
+        self.lbl_playing.setStyleSheet('color: blue')
+        self.btn_stopRecording.setEnabled(False)
+        self.btn_deleteRecord.setEnabled(False)
+        self.btn_playRecord.setEnabled(False)
+        self.outRGB = []
+        self.outDepth = []
 
-	def reproduceRecord(self):
-		global PLAYING, SHOW_MASKED
-		PLAYING = True
-		SHOW_MASKED = False
-		self.cb_showMask.setEnabled(False)
-		self.lbl_noRecording.hide()
-		self.lbl_playing.show()
-		self.gbox_realsenseOutput.setTitle("PLAYING")
-		sample_num = str(self.getSampleNumber()-1)
-		path_move = PATH+'/'+current_movement
-		name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
-		self.capRGB = cv2.VideoCapture(name + '_RGB.mp4')
-		self.capD = cv2.VideoCapture(name + '_D.mp4')
-		if (self.capRGB.isOpened()== False): 
-			choice = QMessageBox.warning(self, "Playing Error", "Error opening video RGB.mp4")
-			return
-		if (self.capD.isOpened()== False): 
-			choice = QMessageBox.warning(self, "Playing Error", "Error opening video D.mp4")
-			return
+        rx = QRegExp("[a-zA-Z0-9_]*")
+        validator = QRegExpValidator(rx)
+        self.in_newPerson.setValidator(validator)
+        self.in_newMovement.setValidator(validator)
 
+    def __del__(self):      
+        self.stop_camera()
 
-		
+    def setMask(self):
+        global SHOW_MASKED
+        if self.cb_showMask.isChecked():
+            SHOW_MASKED = True
+        else:
+            SHOW_MASKED = False
 
-	def enableUserInputs(self, boolSet):		
-		self.btn_startRecording.setEnabled(boolSet)
-		self.in_newPerson.setEnabled(boolSet)
-		self.btn_addPerson.setEnabled(boolSet)
-		self.in_newMovement.setEnabled(boolSet)
-		self.btn_addMovement.setEnabled(boolSet)
-		self.btn_changePath.setEnabled(boolSet)
-		self.cb_person.setEnabled(boolSet)
-		self.in_countdownTime.setEnabled(boolSet)
-		# self.in_FPS.setEnabled(boolSet)
-		# self.in_resolutionWidth.setEnabled(boolSet)
-		# self.in_resolutionHight.setEnabled(boolSet)
-		self.in_minDepth.setEnabled(boolSet)
-		self.in_maxDepth.setEnabled(boolSet)
-		self.tb_movements.setEnabled(boolSet)
-	
-	def deleteRecord(self):
-		self.updateSamplesFile(-1)
-		sample_num = str(self.getSampleNumber())
-		path_move = PATH+'/'+current_movement
-		name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
-		if os.path.isfile(name + '_RGB.mp4'):
-			os.remove(name + '_RGB.mp4')
-		if os.path.isfile(name + '_D.mp4'):
-			os.remove(name + '_D.mp4')
+    def reproduceRecord(self):
+        global PLAYING, SHOW_MASKED
+        PLAYING = True
+        SHOW_MASKED = False
+        self.cb_showMask.setEnabled(False)
+        self.lbl_noRecording.hide()
+        self.lbl_playing.show()
+        self.gbox_realsenseOutput.setTitle("PLAYING")
+        sample_num = str(self.getSampleNumber()-1)
+        path_move = PATH+'/'+current_movement
+        name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
+        self.capRGB = cv2.VideoCapture(name + '_RGB.mp4')
+        self.capD = cv2.VideoCapture(name + '_D.mp4')
+        if (self.capRGB.isOpened()== False): 
+            choice = QMessageBox.warning(self, "Playing Error", "Error opening video RGB.mp4")
+            return
+        if (self.capD.isOpened()== False): 
+            choice = QMessageBox.warning(self, "Playing Error", "Error opening video D.mp4")
+            return
 
 
-	def startCountdown(self):
-		global cTime
-		if current_person_ID==-1:
-			choice = QMessageBox.warning(self, "Record Error", "Please select person")
-			return
-		if current_movement=='':
-			choice = QMessageBox.warning(self, "Record Error", "Please select movement")
-			return
-		cTime = COUNTDOWN_TIME
-		self.lbl_noRecording.hide()
-		self.lbl_recording.hide()
-		self.lbl_countdownTime.show()
-		self.timerCountdown = QTimer(self)
-		self.timerCountdown.timeout.connect(self.update_countdown)
-		self.timerCountdown.start(1)
-		self.enableUserInputs(False)
-		self.btn_deleteRecord.setEnabled(False)
-		self.btn_playRecord.setEnabled(False)
+        
 
-	def update_countdown(self):
-		global cTime
-		self.lbl_countdownTime.setText(str(cTime))		
-		cTime -= 1
-		if cTime == -1:
-			self.lbl_countdownTime.hide()
-			self.lbl_recording.show()
-			self.timerCountdown.stop()
-			self.lbl_countdownTime.setText("")
-			self.startRecord()
-		else:
-			self.timerCountdown.start(1000)
-
-	def stopRecord(self):
-		global cTime, SAVE_MP4
-		SAVE_MP4 = False
-		cTime = COUNTDOWN_TIME
-		self.timerCountdown.stop()
-		self.lbl_countdownTime.hide()
-		self.lbl_recording.hide()
-		self.lbl_noRecording.show()
-		self.enableUserInputs(True)
-		if self.outRGB != []:
-			self.outRGB.release()
-		if self.outDepth != []:
-			self.outDepth.release()
-		self.updateSamplesFile(1)
-		self.btn_deleteRecord.setEnabled(True)
-		self.btn_stopRecording.setEnabled(False)
-		self.btn_playRecord.setEnabled(True)
-
-	def updateSamplesFile(self, add):
-		global people_dataset
-		for name in people_dataset.keys():
-			if people_dataset[name]["ID"] == current_person_ID:
-				people_dataset[name]["samples"][current_movement] += add
-				break
-		try:
-			os.remove(PATH+SAMPLES_FILE)
-		except:
-			pass
-		with open(PATH+SAMPLES_FILE, 'w') as f:
-			json.dump(people_dataset, f, indent=4) 
-		self.updateCurrentPerson()
-
-	def getSampleNumber(self):
-		global people_dataset
-		for name in people_dataset.keys():
-			if people_dataset[name]["ID"] == current_person_ID:
-				samples = people_dataset[name]["samples"][current_movement]
-				return samples
+    def enableUserInputs(self, boolSet):        
+        self.btn_startRecording.setEnabled(boolSet)
+        self.in_newPerson.setEnabled(boolSet)
+        self.btn_addPerson.setEnabled(boolSet)
+        self.in_newMovement.setEnabled(boolSet)
+        self.btn_addMovement.setEnabled(boolSet)
+        self.btn_changePath.setEnabled(boolSet)
+        self.cb_person.setEnabled(boolSet)
+        self.in_countdownTime.setEnabled(boolSet)
+        # self.in_FPS.setEnabled(boolSet)
+        # self.in_resolutionWidth.setEnabled(boolSet)
+        # self.in_resolutionHight.setEnabled(boolSet)
+        self.in_minDepth.setEnabled(boolSet)
+        self.in_maxDepth.setEnabled(boolSet)
+        self.tb_movements.setEnabled(boolSet)
+    
+    def deleteRecord(self):
+        self.updateSamplesFile(-1)
+        sample_num = str(self.getSampleNumber())
+        path_move = PATH+'/'+current_movement
+        name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
+        if os.path.isfile(name + '_RGB.mp4'):
+            os.remove(name + '_RGB.mp4')
+        if os.path.isfile(name + '_D.mp4'):
+            os.remove(name + '_D.mp4')
+        QMessageBox.warning(self, "Sample deleted", f'Sample {name} was deleted')
 
 
-	def startRecord(self):
-		global SAVE_MP4
-		sample_num = str(self.getSampleNumber())
-		path_move = PATH+'/'+current_movement
-		if not os.path.exists(path_move):
-			os.makedirs(path_move)
-		name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
-		fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
-		self.outRGB = cv2.VideoWriter(name + '_RGB.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), True) 
-		self.outDepth = cv2.VideoWriter(name + '_D.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), False)
-		SAVE_MP4 = True
-		self.btn_stopRecording.setEnabled(True)
-		
+    def startCountdown(self):
+        global cTime
+        if current_person_ID==-1:
+            choice = QMessageBox.warning(self, "Record Error", "Please select person")
+            return
+        if current_movement=='':
+            choice = QMessageBox.warning(self, "Record Error", "Please select movement")
+            return
+        cTime = COUNTDOWN_TIME
+        self.lbl_noRecording.hide()
+        self.lbl_recording.hide()
+        self.lbl_countdownTime.show()
+        self.enableUserInputs(False)
+        self.btn_deleteRecord.setEnabled(False)
+        self.btn_playRecord.setEnabled(False)
+        if self.countdown_ena:
+            self.timerCountdown = QTimer(self)
+            self.timerCountdown.timeout.connect(self.update_countdown)
+            self.timerCountdown.start(1)
+        else:
+            self.lbl_countdownTime.hide()
+            self.lbl_recording.show()
+            self.lbl_countdownTime.setText("")
+            self.startRecord()
 
-	def changeDirectory(self):
-		global PATH
-		self.stop_camera()
-		PATH = QFileDialog.getExistingDirectory(self, "Select directory", "/home/")
-		print(PATH)
-		self.start_camera()
-		with open(CONFIG_FILE, 'r') as f:
-			data = json.load(f)
-		data["capture parameters"]["path"] = PATH
-		self.lbl_path.setText(PATH)
-		os.remove(CONFIG_FILE)
-		with open(CONFIG_FILE, 'w') as f:
-			json.dump(data, f, indent=4)
+    def update_countdown(self):
+        global cTime
+        self.lbl_countdownTime.setText(str(cTime))      
+        cTime -= 1
+        if cTime == -1:
+            self.lbl_countdownTime.hide()
+            self.lbl_recording.show()
+            self.timerCountdown.stop()
+            self.lbl_countdownTime.setText("")
+            self.startRecord()
+        else:
+            self.timerCountdown.start(1000)
 
-	def set_currentMovement(self, row, column):
-		global current_movement
-		if self.cb_person.currentText() != "Select":		
-			item = self.tb_movements.item(row, column)
-			current_movement = item.text()
-			self.lbl_currMove.setText(current_movement)
-		
-	def addNewMovement(self):
-		global people_dataset
-		newMovement = self.in_newMovement.text()
-		for key in people_dataset.keys():
-			people_dataset[key]["samples"][newMovement] = 0
-		try:
-			os.remove(PATH+SAMPLES_FILE)
-		except:
-			pass
-		with open(PATH+SAMPLES_FILE, 'w') as f:
-			json.dump(people_dataset, f, indent=4) 
-		self.updateCurrentPerson()
-		self.in_newMovement.setText('')
+    def startRecord(self):
+        global SAVE_MP4
+        sample_num = str(self.getSampleNumber())
+        path_move = PATH+'/'+current_movement
+        if not os.path.exists(path_move):
+            os.makedirs(path_move)
+        name = path_move+'/'+str(current_person_ID).zfill(2)+'_'+sample_num.zfill(4)
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
+        self.outRGB = cv2.VideoWriter(name + '_RGB.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), True) 
+        self.outDepth = cv2.VideoWriter(name + '_D.mp4',fourcc, FPS, (SIZE[0], SIZE[1]), False)
+        SAVE_MP4 = True
+        self.btn_stopRecording.setEnabled(True)
 
-	def addNewPerson(self):
-		global people_dataset
-		newPersonName = self.in_newPerson.text()
-		people_dataset[newPersonName] = {}
-		people_dataset[newPersonName]["ID"] = len(people_dataset)-1
-		people_dataset[newPersonName]["samples"] = {}
-		print("add person 1")
-		if len(people_dataset)>1:
-			name = list(people_dataset.keys())[0]
-			for key in people_dataset[name]["samples"].keys():
-				people_dataset[newPersonName]["samples"][key] = 0
-		try:
-			os.remove(PATH+SAMPLES_FILE)
-		except:
-			pass
-		with open(PATH+SAMPLES_FILE, 'w') as f:
-			json.dump(people_dataset, f, indent=4) 
-		self.get_dataset_info()
-		self.in_newPerson.setText('')
-		print("Person added")
+    def stopRecord(self):
+        global cTime, SAVE_MP4
+        SAVE_MP4 = False
+        cTime = COUNTDOWN_TIME
+        if self.countdown_ena:
+            self.timerCountdown.stop()
+        self.lbl_countdownTime.hide()
+        self.lbl_recording.hide()
+        self.lbl_noRecording.show()
+        self.enableUserInputs(True)
+        if self.outRGB != []:
+            self.outRGB.release()
+        if self.outDepth != []:
+            self.outDepth.release()
+        self.updateSamplesFile(1)
+        self.btn_deleteRecord.setEnabled(True)
+        self.btn_stopRecording.setEnabled(False)
+        self.btn_playRecord.setEnabled(True)
 
+    def updateSamplesFile(self, add):
+        global people_dataset
+        for name in people_dataset.keys():
+            if people_dataset[name]["ID"] == current_person_ID:
+                people_dataset[name]["samples"][current_movement] += add
+                break
+        try:
+            os.remove(PATH+SAMPLES_FILE)
+        except:
+            pass
+        with open(PATH+SAMPLES_FILE, 'w') as f:
+            json.dump(people_dataset, f, indent=4) 
+        self.updateCurrentPerson()
 
-	def updateCurrentPerson(self):
-		global current_person_ID
-		if self.in_newPerson.text() == '':
-			cPersonName = self.cb_person.currentText()
-			self.lbl_IDperson.setText('')
-			print(cPersonName)
-			if cPersonName != "Select":
-				current_person_ID = people_dataset[cPersonName]["ID"]
-				print(people_dataset)
-				self.lbl_IDperson.setText(str(current_person_ID))
-				self.tb_movements.clearContents()
-				data = people_dataset[cPersonName]["samples"]
-				self.tb_movements.setRowCount(len(data))
-				self.tb_movements.setHorizontalHeaderLabels(['Movement','Samples'])     
-				for n, key in enumerate(sorted(data.keys())):
-					newitem = QTableWidgetItem(str(data[key]))
-					self.tb_movements.setItem(n,1,newitem)
-					newitem = QTableWidgetItem(key)
-					self.tb_movements.setItem(n,0,newitem)
-			if cPersonName == "Select":
-				self.tb_movements.clearContents()
+    def getSampleNumber(self):
+        global people_dataset
+        for name in people_dataset.keys():
+            if people_dataset[name]["ID"] == current_person_ID:
+                samples = people_dataset[name]["samples"][current_movement]
+                return samples       
 
+    def changeDirectory(self):
+        global PATH
+        self.stop_camera()
+        PATH = QFileDialog.getExistingDirectory(self, "Select directory", "/home/")
+        print(PATH)
+        self.start_camera()
+        with open(CONFIG_FILE, 'r') as f:
+            data = json.load(f)
+        data["capture parameters"]["path"] = PATH
+        self.lbl_path.setText(PATH)
+        os.remove(CONFIG_FILE)
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
 
-	def getParameters(self):
-		global COUNTDOWN_TIME, FPS, MIN_DEPTH, MAX_DEPTH, SIZE, CONFIG_FILE
-		with open(CONFIG_FILE, 'r') as f:
-			data = json.load(f)
-		COUNTDOWN_TIME = data["capture parameters"]["countdown time"]
-		FPS = data["capture parameters"]["FPS"]
-		SIZE = (data["capture parameters"]["resolution width"], data["capture parameters"]["resolution higth"])
-		MIN_DEPTH = data["capture parameters"]["min depth"]
-		MAX_DEPTH = data["capture parameters"]["max depth"]
-		f.close()
-		self.in_countdownTime.setValue(COUNTDOWN_TIME)
-		self.in_FPS.setValue(FPS)
-		self.in_resolutionWidth.setValue(SIZE[0])
-		self.in_resolutionHight.setValue(SIZE[1])
-		self.in_minDepth.setValue(MIN_DEPTH)
-		self.in_maxDepth.setValue(MAX_DEPTH)
+    def set_currentMovement(self, row, column):
+        global current_movement
+        if self.cb_person.currentText() != "Select":        
+            item = self.tb_movements.item(row, column)
+            current_movement = item.text()
+            self.lbl_currMove.setText(current_movement)
+        
+    def addNewMovement(self):
+        global people_dataset
+        newMovement = self.in_newMovement.text()
+        for key in people_dataset.keys():
+            people_dataset[key]["samples"][newMovement] = 0
+        try:
+            os.remove(PATH+SAMPLES_FILE)
+        except:
+            pass
+        with open(PATH+SAMPLES_FILE, 'w') as f:
+            json.dump(people_dataset, f, indent=4) 
+        self.updateCurrentPerson()
+        self.in_newMovement.setText('')
 
-	def updateParameters(self):
-		global COUNTDOWN_TIME, FPS, MIN_DEPTH, MAX_DEPTH, SIZE, CONFIG_FILE
-		COUNTDOWN_TIME = self.in_countdownTime.value()		
-		FPS = self.in_FPS.value()
-		SIZE = (self.in_resolutionWidth.value(), self.in_resolutionHight.value())
-		MIN_DEPTH = self.in_minDepth.value()
-		MAX_DEPTH = self.in_maxDepth.value()
-		#save capture parameters in config.json
-		with open(CONFIG_FILE, 'r') as f:
-			data = json.load(f)
-			data["capture parameters"]["countdown time"] = COUNTDOWN_TIME
-			data["capture parameters"]["FPS"] = FPS
-			data["capture parameters"]["resolution width"] = SIZE[0]
-			data["capture parameters"]["resolution higth"] = SIZE[1]
-			data["capture parameters"]["min depth"] = MIN_DEPTH
-			data["capture parameters"]["max depth"] = MAX_DEPTH
-		os.remove(CONFIG_FILE)
-		with open(CONFIG_FILE, 'w') as f:
-			json.dump(data, f, indent=4)
-		#print(SIZE)
-
-	def verifyCamera(self):
-		#Verify realsense is connected
-		ctx = rs.context()
-		if len(ctx.devices) == 0:
-			choice = QMessageBox.warning(self, "Camera not found", "Please connect RealSense camera")
-			sys.exit()
-
-	def start_camera(self):				
-		# Configure depth and color streams
-		self.pipeline = rs.pipeline()
-		config = rs.config()
-		config.enable_stream(rs.stream.depth, SIZE[0], int(0.75*SIZE[1]), rs.format.z16, FPS)
-		config.enable_stream(rs.stream.color, SIZE[0], SIZE[1], rs.format.bgr8, FPS)
-		# Start streaming
-		profile = self.pipeline.start(config)
-		self.align = rs.align(rs.stream.color)
-		depth_sensor = profile.get_device().first_depth_sensor()
-		depth_scale = depth_sensor.get_depth_scale()
-		self.min_depth_data = int(MIN_DEPTH*0.01 / depth_scale)
-		self.max_depth_data = int(MAX_DEPTH*0.01 / depth_scale)
-		clipping_distance_in_meters = 1 #1 meter
-		clipping_distance = clipping_distance_in_meters / depth_scale
-		self.timer = QTimer(self)
-		self.timer.timeout.connect(self.update_frame)
-		self.timer.start(1000./FPS)
+    def addNewPerson(self):
+        global people_dataset
+        newPersonName = self.in_newPerson.text()
+        people_dataset[newPersonName] = {}
+        people_dataset[newPersonName]["ID"] = len(people_dataset)-1
+        people_dataset[newPersonName]["samples"] = {}
+        print("add person 1")
+        if len(people_dataset)>1:
+            name = list(people_dataset.keys())[0]
+            for key in people_dataset[name]["samples"].keys():
+                people_dataset[newPersonName]["samples"][key] = 0
+        try:
+            os.remove(PATH+SAMPLES_FILE)
+        except:
+            pass
+        with open(PATH+SAMPLES_FILE, 'w') as f:
+            json.dump(people_dataset, f, indent=4) 
+        self.get_dataset_info()
+        self.in_newPerson.setText('')
+        print("Person added")
 
 
-	def update_frame(self):
-		global PLAYING
-		if not PLAYING:
-			frames = self.pipeline.wait_for_frames()
-			aligned_frames = self.align.process(frames)
-
-			aligned_depth_frame = aligned_frames.get_depth_frame()
-			color_frame = aligned_frames.get_color_frame()
-
-			if not aligned_depth_frame or not color_frame:
-				returnx
-
-			depth_image_temp = np.asanyarray(aligned_depth_frame.get_data())
-			self.depth_image = np.asanyarray(aligned_depth_frame.get_data())
-			self.color_image = np.asanyarray(color_frame.get_data())
-
-			depth_image_3d = np.dstack((depth_image_temp, depth_image_temp, depth_image_temp))	
-			depth_image_temp[depth_image_temp<self.min_depth_data] = self.max_depth_data
-			depth_image_temp[self.depth_image>self.max_depth_data] = self.max_depth_data
-			depth_image_temp -= self.min_depth_data
-			depth_image_temp = 255.0 * (depth_image_temp.astype(np.float) / (self.max_depth_data-self.min_depth_data))
-			self.depth_image = depth_image_temp.astype(np.uint8)
-
-			grey_color = 153
-			self.masked = np.where((depth_image_3d > self.max_depth_data) | (depth_image_3d < self.min_depth_data), grey_color, self.color_image)
-
-			# depth_frame = frames.get_depth_frame()
-			# color_frame = frames.get_color_frame()
-			# if not depth_frame or not color_frame:
-			# 	return
-
-			# depth_image_temp = np.asanyarray(depth_frame.get_data())
-			# self.depth_image = cv2.convertScaleAbs(depth_image_temp, alpha=0.03)
-			# self.color_image = np.asanyarray(color_frame.get_data())
-
-			# self.depth_image[self.depth_image<MIN_DEPTH] = MAX_DEPTH
-			# self.depth_image[self.depth_image>MAX_DEPTH] = MAX_DEPTH
-			# self.depth_image -= MIN_DEPTH
-			# self.depth_image *= int((255/(MAX_DEPTH-MIN_DEPTH)))
-
-						
-			if SAVE_MP4:
-				self.outRGB.write(self.color_image)
-				self.outDepth.write(self.depth_image)
-
-			color_image_show = cv2.flip( self.color_image, 1 )
-			masked_show = cv2.flip( self.masked, 1 )
-			depth_image_show = cv2.flip( self.depth_image, 1 )
-
-			if SHOW_MASKED:			
-				self.displayImage(masked_show, depth_image_show, 1)
-			else:
-				self.displayImage(color_image_show, depth_image_show, 1)
-
-		else:			
-			ret, frameRGB = self.capRGB.read()
-			ret, frameD = self.capD.read()			
-			if ret == True:
-				self.displayImage(frameRGB, frameD[:,:,0], 1)
-			else:				
-				self.capRGB.release()
-				self.capD.release()
-				PLAYING = False
-				self.lbl_noRecording.show()
-				self.lbl_playing.hide()
-				self.gbox_realsenseOutput.setTitle("Realsense output")
-				self.cb_showMask.setEnabled(True)
+    def updateCurrentPerson(self):
+        global current_person_ID
+        if self.in_newPerson.text() == '':
+            cPersonName = self.cb_person.currentText()
+            self.lbl_IDperson.setText('')
+            print(cPersonName)
+            if cPersonName != "Select":
+                current_person_ID = people_dataset[cPersonName]["ID"]
+                print(people_dataset)
+                self.lbl_IDperson.setText(str(current_person_ID))
+                self.tb_movements.clearContents()
+                data = people_dataset[cPersonName]["samples"]
+                self.tb_movements.setRowCount(len(data))
+                self.tb_movements.setHorizontalHeaderLabels(['Movement','Samples'])     
+                for n, key in enumerate(sorted(data.keys())):
+                    newitem = QTableWidgetItem(str(data[key]))
+                    self.tb_movements.setItem(n,1,newitem)
+                    newitem = QTableWidgetItem(key)
+                    self.tb_movements.setItem(n,0,newitem)
+            if cPersonName == "Select":
+                self.tb_movements.clearContents()
 
 
-	def displayImage(self, img_rgb, img_d, window=1):
-		img = cv2.resize(img_rgb,(int(480),int(360)))
-		frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)		
-		img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
-		pix = QPixmap.fromImage(img)
-		self.lbl_video_rgb.setPixmap(pix)
-		img = cv2.resize(img_d,(int(480),int(360)))
-		frame = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)		
-		img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
-		pix = QPixmap.fromImage(img)
-		self.lbl_video_depth.setPixmap(pix)
+    def getParameters(self):
+        global COUNTDOWN_TIME, FPS, MIN_DEPTH, MAX_DEPTH, SIZE, CONFIG_FILE
+        global TRIGGER_ENABLE, TRIGGER_X, TRIGGER_Y, TRIGGER_RADIUS
+        with open(CONFIG_FILE, 'r') as f:
+            data = json.load(f)
+        COUNTDOWN_TIME = data["capture parameters"]["countdown time"]
+        FPS = data["capture parameters"]["FPS"]
+        SIZE = (data["capture parameters"]["resolution width"], data["capture parameters"]["resolution higth"])
+        MIN_DEPTH = data["capture parameters"]["min depth"]
+        MAX_DEPTH = data["capture parameters"]["max depth"]
+        TRIGGER_ENABLE = data["trigger"]["enable"]
+        TRIGGER_X = data["trigger"]["x"]
+        TRIGGER_Y = data["trigger"]["y"]
+        TRIGGER_RADIUS = data["trigger"]["radius"]
+        f.close()
+        self.in_countdownTime.setValue(COUNTDOWN_TIME)
+        self.in_FPS.setValue(FPS)
+        self.in_resolutionWidth.setValue(SIZE[0])
+        self.in_resolutionHight.setValue(SIZE[1])
+        self.in_minDepth.setValue(MIN_DEPTH)
+        self.in_maxDepth.setValue(MAX_DEPTH)
+        self.tr_ena.setChecked(TRIGGER_ENABLE)
+        self.tr_x.setValue(TRIGGER_X)
+        self.tr_y.setValue(TRIGGER_Y)
+        self.tr_r.setValue(TRIGGER_RADIUS)
+
+    def updateParameters(self):
+        global COUNTDOWN_TIME, FPS, MIN_DEPTH, MAX_DEPTH, SIZE, CONFIG_FILE
+        global TRIGGER_ENABLE, TRIGGER_X, TRIGGER_Y, TRIGGER_RADIUS
+        COUNTDOWN_TIME = self.in_countdownTime.value()      
+        FPS = self.in_FPS.value()
+        SIZE = (self.in_resolutionWidth.value(), self.in_resolutionHight.value())
+        MIN_DEPTH = self.in_minDepth.value()
+        MAX_DEPTH = self.in_maxDepth.value()
+        TRIGGER_ENABLE = self.tr_ena.isChecked()
+        TRIGGER_X = self.tr_x.value()
+        TRIGGER_Y = self.tr_y.value()
+        TRIGGER_RADIUS = self.tr_r.value()
+        #save capture parameters in config.json
+        with open(CONFIG_FILE, 'r') as f:
+            data = json.load(f)
+            data["capture parameters"]["countdown time"] = COUNTDOWN_TIME
+            data["capture parameters"]["FPS"] = FPS
+            data["capture parameters"]["resolution width"] = SIZE[0]
+            data["capture parameters"]["resolution higth"] = SIZE[1]
+            data["capture parameters"]["min depth"] = MIN_DEPTH
+            data["capture parameters"]["max depth"] = MAX_DEPTH
+            data["trigger"]["enable"] = TRIGGER_ENABLE
+            data["trigger"]["x"] = TRIGGER_X
+            data["trigger"]["y"] = TRIGGER_Y
+            data["trigger"]["radius"] = TRIGGER_RADIUS
+        os.remove(CONFIG_FILE)
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+        #print(SIZE)
+
+    def verifyCamera(self):
+        #Verify realsense is connected
+        ctx = rs.context()
+        if len(ctx.devices) == 0:
+            choice = QMessageBox.warning(self, "Camera not found", "Please connect RealSense camera")
+            sys.exit()
+
+    def start_camera(self):             
+        # Configure depth and color streams
+        self.pipeline = rs.pipeline()
+        config = rs.config()
+        config.enable_stream(rs.stream.depth, SIZE[0], int(0.75*SIZE[1]), rs.format.z16, FPS)
+        config.enable_stream(rs.stream.color, SIZE[0], SIZE[1], rs.format.bgr8, FPS)
+        # Start streaming
+        profile = self.pipeline.start(config)
+        self.align = rs.align(rs.stream.color)
+        depth_sensor = profile.get_device().first_depth_sensor()
+        depth_scale = depth_sensor.get_depth_scale()
+        self.min_depth_data = int(MIN_DEPTH*0.01 / depth_scale)
+        self.max_depth_data = int(MAX_DEPTH*0.01 / depth_scale)
+        clipping_distance_in_meters = 1 #1 meter
+        clipping_distance = clipping_distance_in_meters / depth_scale
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(1000./FPS)
 
 
-	def stop_camera(self):
-		self.timer.stop()
-		self.pipeline.stop()
-		#self.outRGB.release()
-		#self.outDepth.release()
+    def update_frame(self):
+        global PLAYING
+        if not PLAYING:
+            frames = self.pipeline.wait_for_frames()
+            aligned_frames = self.align.process(frames)
 
-		# frame = 255*np.zeros(self.color_image.shape)
-		# img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
-		# pix = QPixmap.fromImage(img)
-		# self.lbl_video_rgb.setPixmap(pix)	
-		# self.lbl_video_depth.setPixmap(pix)	
+            aligned_depth_frame = aligned_frames.get_depth_frame()
+            color_frame = aligned_frames.get_color_frame()
 
-	def validate_path(self):
-		global PATH
-		with open(CONFIG_FILE, 'r') as f:
-			data = json.load(f)
-			path_read = data["capture parameters"]["path"]
-			if path_read == "":
-				print("no path in config.json")
-				PATH = self.ask2path("Have not cofigured yet a path for the dataset. ")
-			else:
-				if os.path.isdir(path_read):
-					PATH = path_read
-				else:
-					PATH = self.ask2path("The readed path in config file does not exist. ")
-		data["capture parameters"]["path"] = PATH
-		self.lbl_path.setText(PATH)
-		os.remove(CONFIG_FILE)
-		with open(CONFIG_FILE, 'w') as f:
-			json.dump(data, f, indent=4)
+            if not aligned_depth_frame or not color_frame:
+                returnx
 
-	def ask2path(self, msg_err):
-		msg_err = msg_err + "Please select a directory."
-		choice = QMessageBox.question(self, "Path for dataset", msg_err, QMessageBox.Yes | QMessageBox.No)
-		if choice == QMessageBox.Yes:
-			path_selected = QFileDialog.getExistingDirectory(self, "Select directory", "/home/")
-			print(path_selected)
-			return path_selected
-		else:
-			sys.exit()
+            depth_image_temp = np.asanyarray(aligned_depth_frame.get_data())
+            self.depth_image = np.asanyarray(aligned_depth_frame.get_data())
+            self.color_image = np.asanyarray(color_frame.get_data())
 
-	def get_dataset_info(self):
-		global people_dataset
-		try:
-			f=open(PATH+SAMPLES_FILE, 'r')
-		except:
-			choice = QMessageBox.warning(self, "New dataset", "Please add a new person and movement to start a dataset")
-			return 0
-		people_dataset = json.load(f)
-		f.close()
-		print("get_dataset_info")		
-		self.cb_person.clear()
-		if len(people_dataset) != 0:
-			self.cb_person.addItems(["Select"]+list(people_dataset.keys()))
-		# for name in people_dataset.keys():
-		# 	if people_dataset[name]["ID"] == current_person_ID:
-		# 		self.cb_person.setItemText(name)
-		# 		break
+            depth_image_3d = np.dstack((depth_image_temp, depth_image_temp, depth_image_temp))  
+            depth_image_temp[depth_image_temp<self.min_depth_data] = self.max_depth_data
+            depth_image_temp[self.depth_image>self.max_depth_data] = self.max_depth_data
+            depth_image_temp -= self.min_depth_data
+            depth_image_temp = 255.0 * (depth_image_temp.astype(np.float) / (self.max_depth_data-self.min_depth_data))
+            self.depth_image = depth_image_temp.astype(np.uint8)
+
+            grey_color = 153
+            self.masked = np.where((depth_image_3d > self.max_depth_data) | (depth_image_3d < self.min_depth_data), grey_color, self.color_image)
+
+            # depth_frame = frames.get_depth_frame()
+            # color_frame = frames.get_color_frame()
+            # if not depth_frame or not color_frame:
+            #   return
+
+            # depth_image_temp = np.asanyarray(depth_frame.get_data())
+            # self.depth_image = cv2.convertScaleAbs(depth_image_temp, alpha=0.03)
+            # self.color_image = np.asanyarray(color_frame.get_data())
+
+            # self.depth_image[self.depth_image<MIN_DEPTH] = MAX_DEPTH
+            # self.depth_image[self.depth_image>MAX_DEPTH] = MAX_DEPTH
+            # self.depth_image -= MIN_DEPTH
+            # self.depth_image *= int((255/(MAX_DEPTH-MIN_DEPTH)))
+
+                        
+            if SAVE_MP4:
+                self.outRGB.write(self.color_image)
+                self.outDepth.write(self.depth_image)
+
+            if self.tr_test.isChecked() or self.tr_ena.isChecked():
+                self.trigger_prev_color = self.trigger_curr_color
+                hsv = cv2.cvtColor(self.color_image, cv2.COLOR_BGR2HSV)
+
+                lower_green = np.array([50,30,30])
+                upper_green = np.array([70,255,255])
+                lower_blue = np.array([110,30,30])
+                upper_blue = np.array([130,255,255])
+                lower_red1 = np.array([0,30,30])
+                upper_red1 = np.array([10,255,255])
+                lower_red2 = np.array([170,30,30])
+                upper_red2 = np.array([180,255,255])
+
+                mask_green = cv2.inRange(hsv, lower_green, upper_green)
+                mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+                mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+                mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+                mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+
+                mask_circle = np.zeros_like(mask_green, dtype='uint8')
+                cv2.circle(mask_circle, (TRIGGER_X, TRIGGER_Y), TRIGGER_RADIUS,
+                    255, -1)
+                max_pixels = np.sum(mask_circle/255)
+
+                mask_green_circle = cv2.bitwise_and(mask_green, mask_green, mask= mask_circle)
+                mask_blue_circle = cv2.bitwise_and(mask_blue, mask_blue, mask= mask_circle)
+                mask_red_circle = cv2.bitwise_and(mask_red, mask_red, mask= mask_circle)
+
+                green_flag = (np.sum(mask_green_circle/255) / max_pixels) > 0.3
+                blue_flag = (np.sum(mask_blue_circle/255) / max_pixels) > 0.3
+                red_flag = (np.sum(mask_red_circle/255) / max_pixels) > 0.3
+
+                if green_flag:
+                    self.trigger_curr_color = "GREEN"
+                elif blue_flag:
+                    self.trigger_curr_color = "BLUE"
+                elif red_flag:
+                    self.trigger_curr_color = "RED"
+                #else:
+                #    self.trigger_curr_color = "NONE"
+
+                cv2.circle(self.color_image, (TRIGGER_X, TRIGGER_Y), TRIGGER_RADIUS,
+                    (0,255,255), 2)
+
+                self.tr_color.setText(self.trigger_curr_color)
+
+            if self.tr_ena.isChecked():
+                if self.trigger_curr_color=="RED" and self.trigger_prev_color=="GREEN":
+                    if not SAVE_MP4:
+                        self.startCountdown()
+                elif self.trigger_curr_color=="GREEN" and self.trigger_prev_color=="RED":
+                    if SAVE_MP4:
+                        self.stopRecord()
 
 
-# 		# dialog = dialogPath(parent=self, msg_err=msg_err)
-# 		# self.hide()
-# 		# print("hide")
-# 		# dialog.exec_()
-# 		# print("esperando")
-# 		# self.show()
-# 		# path = dialog.path_selected
-# 		# print(path)
-# 		# return path
+            if self.cb_flip.isChecked():
+                color_image_show = cv2.flip( self.color_image, 1 )
+                masked_show = cv2.flip( self.masked, 1 )
+                depth_image_show = cv2.flip( self.depth_image, 1 )
+            else:
+                color_image_show = self.color_image
+                masked_show = self.masked
+                depth_image_show = self.depth_image
+
+            #if self.tr_test.isChecked():
+            #    depth_image_show = mask_red_circle
+
+            if SHOW_MASKED:         
+                self.displayImage(masked_show, depth_image_show, 1)
+            else:
+                self.displayImage(color_image_show, depth_image_show, 1)
+
+        else:           
+            ret, frameRGB = self.capRGB.read()
+            ret, frameD = self.capD.read()          
+            if ret == True:
+                self.displayImage(frameRGB, frameD[:,:,0], 1)
+            else:               
+                self.capRGB.release()
+                self.capD.release()
+                PLAYING = False
+                self.lbl_noRecording.show()
+                self.lbl_playing.hide()
+                self.gbox_realsenseOutput.setTitle("Realsense output")
+                self.cb_showMask.setEnabled(True)
+
+
+    def displayImage(self, img_rgb, img_d, window=1):
+        img = cv2.resize(img_rgb,(int(480),int(360)))
+        frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)        
+        img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+        pix = QPixmap.fromImage(img)
+        self.lbl_video_rgb.setPixmap(pix)
+        img = cv2.resize(img_d,(int(480),int(360)))
+        frame = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)       
+        img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+        pix = QPixmap.fromImage(img)
+        self.lbl_video_depth.setPixmap(pix)
+
+
+    def stop_camera(self):
+        self.timer.stop()
+        self.pipeline.stop()
+        #self.outRGB.release()
+        #self.outDepth.release()
+
+        # frame = 255*np.zeros(self.color_image.shape)
+        # img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+        # pix = QPixmap.fromImage(img)
+        # self.lbl_video_rgb.setPixmap(pix) 
+        # self.lbl_video_depth.setPixmap(pix)   
+
+    def validate_path(self):
+        global PATH
+        with open(CONFIG_FILE, 'r') as f:
+            data = json.load(f)
+            path_read = data["capture parameters"]["path"]
+            if path_read == "":
+                print("no path in config.json")
+                PATH = self.ask2path("Have not cofigured yet a path for the dataset. ")
+            else:
+                if os.path.isdir(path_read):
+                    PATH = path_read
+                else:
+                    PATH = self.ask2path("The readed path in config file does not exist. ")
+        data["capture parameters"]["path"] = PATH
+        self.lbl_path.setText(PATH)
+        os.remove(CONFIG_FILE)
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+
+    def ask2path(self, msg_err):
+        msg_err = msg_err + "Please select a directory."
+        choice = QMessageBox.question(self, "Path for dataset", msg_err, QMessageBox.Yes | QMessageBox.No)
+        if choice == QMessageBox.Yes:
+            path_selected = QFileDialog.getExistingDirectory(self, "Select directory", "/home/")
+            print(path_selected)
+            return path_selected
+        else:
+            sys.exit()
+
+    def get_dataset_info(self):
+        global people_dataset
+        try:
+            f=open(PATH+SAMPLES_FILE, 'r')
+        except:
+            choice = QMessageBox.warning(self, "New dataset", "Please add a new person and movement to start a dataset")
+            return 0
+        people_dataset = json.load(f)
+        f.close()
+        print("get_dataset_info")       
+        self.cb_person.clear()
+        if len(people_dataset) != 0:
+            self.cb_person.addItems(["Select"]+list(people_dataset.keys()))
+        # for name in people_dataset.keys():
+        #   if people_dataset[name]["ID"] == current_person_ID:
+        #       self.cb_person.setItemText(name)
+        #       break
+
+
+#       # dialog = dialogPath(parent=self, msg_err=msg_err)
+#       # self.hide()
+#       # print("hide")
+#       # dialog.exec_()
+#       # print("esperando")
+#       # self.show()
+#       # path = dialog.path_selected
+#       # print(path)
+#       # return path
 
 # class dialogPath(QDialog):
-# 	def __init__(self, parent, msg_err):
-# 		super(dialogPath,self).__init__(parent)
-# 		loadUi('dialogPath.ui',self)
-# 		self.lbl_msg_err.setText(msg_err)
-# 		self.path_selected = None
-# 		#self.buttonBox.accepted.connect(self.selectFolder)
-# 		#self.buttonBox.rejected.connect(self.exit)
-# 		#self.show()	
-# 		print("dialogue")
+#   def __init__(self, parent, msg_err):
+#       super(dialogPath,self).__init__(parent)
+#       loadUi('dialogPath.ui',self)
+#       self.lbl_msg_err.setText(msg_err)
+#       self.path_selected = None
+#       #self.buttonBox.accepted.connect(self.selectFolder)
+#       #self.buttonBox.rejected.connect(self.exit)
+#       #self.show()    
+#       print("dialogue")
 
-# 	def selectFolder(self):
-# 		self.path_selected = QFileDialog.getExistingDirectory(self, "Select directory", "/home/")
+#   def selectFolder(self):
+#       self.path_selected = QFileDialog.getExistingDirectory(self, "Select directory", "/home/")
 
-# 	def exit(self):
-# 		sys.exit(app.exec_())
+#   def exit(self):
+#       sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
-	app = QApplication(sys.argv)
-	ui = mainwindow()
-	ui.setWindowTitle('Dataset Recorder')
-	ui.show()	
-	sys.exit(app.exec_())
+    app = QApplication(sys.argv)
+    ui = mainwindow()
+    ui.setWindowTitle('Dataset Recorder')
+    ui.show()   
+    sys.exit(app.exec_())
 
 
 
