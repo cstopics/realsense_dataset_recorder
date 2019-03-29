@@ -374,7 +374,7 @@ class mainwindow(QMainWindow):
 			color_frame = aligned_frames.get_color_frame()
 
 			if not aligned_depth_frame or not color_frame:
-				return
+				returnx
 
 			depth_image_temp = np.asanyarray(aligned_depth_frame.get_data())
 			self.depth_image = np.asanyarray(aligned_depth_frame.get_data())

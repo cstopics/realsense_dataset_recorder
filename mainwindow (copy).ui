@@ -566,7 +566,7 @@ movement</string>
       <x>1010</x>
       <y>10</y>
       <width>301</width>
-      <height>461</height>
+      <height>251</height>
      </rect>
     </property>
     <property name="title">
@@ -723,134 +723,6 @@ movement</string>
       <string>Play last record</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_13">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>260</y>
-       <width>120</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Video Trigger</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_14">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>320</y>
-       <width>120</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>X:</string>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="cb_showMask_2">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>290</y>
-       <width>111</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Enable</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_15">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>350</y>
-       <width>120</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Y:</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_16">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>380</y>
-       <width>120</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Radius:</string>
-     </property>
-    </widget>
-    <widget class="QSpinBox" name="in_minDepth_2">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>320</y>
-       <width>48</width>
-       <height>26</height>
-      </rect>
-     </property>
-     <property name="minimum">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <number>999</number>
-     </property>
-     <property name="value">
-      <number>10</number>
-     </property>
-    </widget>
-    <widget class="QSpinBox" name="in_minDepth_3">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>350</y>
-       <width>48</width>
-       <height>26</height>
-      </rect>
-     </property>
-     <property name="minimum">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <number>999</number>
-     </property>
-     <property name="value">
-      <number>10</number>
-     </property>
-    </widget>
-    <widget class="QSpinBox" name="in_minDepth_4">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>380</y>
-       <width>48</width>
-       <height>26</height>
-      </rect>
-     </property>
-     <property name="minimum">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <number>999</number>
-     </property>
-     <property name="value">
-      <number>10</number>
-     </property>
-    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -859,7 +731,7 @@ movement</string>
      <x>0</x>
      <y>0</y>
      <width>1323</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

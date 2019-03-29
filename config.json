@@ -1,11 +1,11 @@
 {
     "capture parameters": {
-        "resolution higth": 480, 
-        "resolution width": 640, 
-        "countdown time": 3, 
-        "FPS": 30, 
-        "max depth": 300, 
-        "path": "/home/carolina/Documents/dataset", 
-        "min depth": 130
+        "resolution higth": 480,
+        "resolution width": 640,
+        "countdown time": 3,
+        "FPS": 30,
+        "max depth": 300,
+        "path": "/home/camilo/Documents/dataset",
+        "min depth": 50
     }
 }
